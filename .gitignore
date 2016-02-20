@@ -28,6 +28,8 @@
 *.x86_64
 *.hex
 
+solhexd
+
 # Debug files
 *.dSYM/
 /nbproject/
