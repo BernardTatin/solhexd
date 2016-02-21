@@ -31,10 +31,20 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <stdint.h>
 
-int main(int argn, char **argv) {
+typedef struct {
+	int64_t from;
+	int64_t to;
+	char *fileName;
+} TSfileConfig;
+
+int main(int argn, char *argv[]) {
 	for (int i=0; i<argn; i++) {
-		fprintf(stdout, "argv[%d] = %s\n", i, argv[i]);
+		if (strcmp(argv[i], "--help") == 0) {
+
+		}
 	}
 	return 0;
 }
