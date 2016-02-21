@@ -94,6 +94,7 @@ static int hexdump(TSfileConfig *fc) {
 		while ((read_len = read(fd, buffer, BLEN)) > 0) {
 			int ptr_out = 0;
 			char *dst = line;
+			int rest = read_len;
 			uint8_t *src = buffer;
 
 			ptr_in += read_len;
@@ -101,13 +102,13 @@ static int hexdump(TSfileConfig *fc) {
 				int wbytes = sprintf(dst, "%08lx: ", addr);
 				uint8_t *old_src = src;
 				dst += wbytes;
-				for (int i=0; i<HLEN; i++) {
+				for (int i=0; i<HLEN && i<rest; i++) {
 					wbytes = sprintf(dst, "%02x ", *(src++));
 					dst += wbytes;
 				}
 				src = old_src;
 				*(dst++) = '\'';
-				for (int i=0; i<HLEN; i++) {
+				for (int i=0; i<HLEN && i<rest; i++) {
 					uint8_t b = *(src++);
 					if (b < 32 || b > 127) {
 						*(dst++) = '.';
@@ -120,6 +121,7 @@ static int hexdump(TSfileConfig *fc) {
 				dst = line;
 				ptr_out += HLEN;
 				addr += HLEN;
+				rest -= HLEN;
 				fprintf(stdout, "%s\n", line);
 			}
 		}
