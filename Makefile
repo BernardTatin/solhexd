@@ -46,5 +46,9 @@ $(EXE): $(EXE).o
 $(EXE).o: $(EXE).c
 		$(CC) -c $< -o $@ $(CFLAGS)
 
+test: $(EXE)
+		./$(EXE) LICENSE README.md
+		./$(EXE) --to 32 LICENSE README.md
+
 clean:
 		$(RM) $(EXE) $(EXE).o
