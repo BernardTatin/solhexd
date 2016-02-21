@@ -34,6 +34,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+
 
 #if !defined(SUCCESS)
 #define SUCCESS 0
@@ -43,11 +49,18 @@
 #define FAILURE 1
 #endif
 
+#define HLEN	16
+#define BLEN	(HLEN * 256)
+#define LLEN	256
+
 typedef struct {
 	int64_t from;
 	int64_t to;
 	char *fileName;
 } TSfileConfig;
+
+static uint8_t buffer[BLEN];
+static char line[LLEN];
 
 static void dohelp(const int exitCode) {
 	fprintf(stdout, "dohelp\n");
@@ -57,20 +70,60 @@ static void dohelp(const int exitCode) {
 static TSfileConfig *duplicate(TSfileConfig *fileConfig) {
 	TSfileConfig *fc = (TSfileConfig *)malloc(sizeof(TSfileConfig));
 
+	if (fc == NULL) {
+		fprintf(stdout, "ERROR: cannot allocate memory\n");
+		exit(FAILURE);
+	}
 	fc->from = fileConfig->from;
 	fc->to = fileConfig->to;
 	fc->fileName = fileConfig->fileName;
 
-	fileConfig->from = 0l;
-	fileConfig->to = 0l;
 	fileConfig->fileName = NULL;
 
 	return fc;
 }
 
 static int hexdump(TSfileConfig *fc) {
+	int fd = open(fc->fileName, O_RDONLY);
 	fprintf(stdout, "File : %s\n", fc->fileName);
 	fprintf(stdout, "  from : %08lx to : %08lx\n", fc->from, fc->to);
+	if (fd != -1) {
+		ssize_t addr = 0;
+		ssize_t ptr_in = 0;
+		ssize_t read_len;
+		while ((read_len = read(fd, buffer, BLEN)) > 0) {
+			int ptr_out = 0;
+			char *dst = line;
+			uint8_t *src = buffer;
+
+			ptr_in += read_len;
+			while (ptr_out < ptr_in) {
+				int wbytes = sprintf(dst, "%08lx: ", addr);
+				uint8_t *old_src = src;
+				dst += wbytes;
+				for (int i=0; i<HLEN; i++) {
+					wbytes = sprintf(dst, "%02x ", *(src++));
+					dst += wbytes;
+				}
+				src = old_src;
+				*(dst++) = '\'';
+				for (int i=0; i<HLEN; i++) {
+					uint8_t b = *(src++);
+					if (b < 32 || b > 127) {
+						*(dst++) = '.';
+					} else {
+						*(dst++) = (char)b;
+					}
+				}
+				*(dst++) = '\'';
+				*dst = 0;
+				dst = line;
+				ptr_out += HLEN;
+				addr += HLEN;
+				fprintf(stdout, "%s\n", line);
+			}
+		}
+	}
 
 	free(fc);
 	return SUCCESS;
@@ -92,12 +145,21 @@ int main(int argn, char *argv[]) {
 		if (strcmp(arg, "--help") == 0) {
 			dohelp(SUCCESS);
 		} else if (strcmp(arg, "--from") == 0) {
-			fileConfig.from = atol(arg);
+			i++;
+			if (i == argn) {
+				dohelp(FAILURE);
+			}
+			fileConfig.from = atol(argv[i]);
+			fprintf(stdout, "	from = %ld\n", fileConfig.from);
 		} else if (strcmp(arg, "--to") == 0) {
-			fileConfig.to = atol(arg);
+			i++;
+			if (i == argn) {
+				dohelp(FAILURE);
+			}
+			fileConfig.to = (int64_t)atoi(argv[i]);
+			fprintf(stdout, "	to = %ld / %s\n", fileConfig.to, argv[i]);
 		} else {
 			fileConfig.fileName = arg;
-			fprintf(stdout, "	call hexdump %s\n", arg);
 			hexdump(duplicate(&fileConfig));
 		}
 	}

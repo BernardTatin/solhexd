@@ -32,8 +32,8 @@ CC = cc
 LD = cc
 RM = rm -f
 
-CFLAGS = -std=c11 -xO3
-LDFLAGS =
+CFLAGS = -std=c11 -xO3 -m64 -errtags=yes
+LDFLAGS = -m64
 
 EXE = solhexd
 SRC = 
