@@ -32,8 +32,11 @@ CC = cc
 LD = cc
 RM = rm -f
 
-CFLAGS = -std=c11 -xO3 -m64 -errtags=yes
-LDFLAGS = -m64
+arch = -m64
+
+ipath = 
+CFLAGS = -std=c11 -xO3 $(arch) $(ipath) -errtags=yes
+LDFLAGS = $(arch)
 
 EXE = solhexd
 SRC = 
@@ -52,3 +55,4 @@ test: $(EXE)
 
 clean:
 		$(RM) $(EXE) $(EXE).o
+		$(RM) a.out core

@@ -39,15 +39,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-
-
-#if !defined(SUCCESS)
-#define SUCCESS 0
-#endif
-
-#if !defined(FAILURE)
-#define FAILURE 1
-#endif
+#include "include/basedef.h"
 
 #define HLEN	16
 #define BLEN	(HLEN * 256)
@@ -61,14 +53,6 @@ typedef struct {
 
 static uint8_t buffer[BLEN];
 static char line[LLEN];
-
-static inline int min(int a, int b) {
-	if (a < b) {
-		return a;
-	} else {
-		return b;
-	}
-}
 
 static _Noreturn void dohelp(const int exitCode) {
 	fprintf(stdout, "dohelp\n");
