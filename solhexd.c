@@ -62,7 +62,15 @@ typedef struct {
 static uint8_t buffer[BLEN];
 static char line[LLEN];
 
-static void dohelp(const int exitCode) {
+static inline int min(int a, int b) {
+	if (a < b) {
+		return a;
+	} else {
+		return b;
+	}
+}
+
+static _Noreturn void dohelp(const int exitCode) {
 	fprintf(stdout, "dohelp\n");
 	exit(exitCode);
 }
@@ -101,14 +109,22 @@ static int hexdump(TSfileConfig *fc) {
 			while (ptr_out < ptr_in) {
 				int wbytes = sprintf(dst, "%08lx: ", addr);
 				uint8_t *old_src = src;
+				int imax = min(HLEN, rest);
+
 				dst += wbytes;
-				for (int i=0; i<HLEN && i<rest; i++) {
+				for (int i=0; i<imax; i++) {
 					wbytes = sprintf(dst, "%02x ", *(src++));
 					dst += wbytes;
 				}
+				if (imax < HLEN) {
+					for (int i=imax; i<HLEN; i++) {
+						wbytes = sprintf(dst, "   ", *(src++));
+						dst += wbytes;
+					}
+				}
 				src = old_src;
 				*(dst++) = '\'';
-				for (int i=0; i<HLEN && i<rest; i++) {
+				for (int i=0; i<imax; i++) {
 					uint8_t b = *(src++);
 					if (b < 32 || b > 127) {
 						*(dst++) = '.';
@@ -125,6 +141,8 @@ static int hexdump(TSfileConfig *fc) {
 				fprintf(stdout, "%s\n", line);
 			}
 		}
+	} else {
+		fprintf(stderr, "Cannot open file %s\n", fc->fileName);
 	}
 
 	free(fc);
