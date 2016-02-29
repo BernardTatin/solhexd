@@ -29,7 +29,10 @@
 *.hex
 core
 
-solhexd
+solhexd-m32
+solhexd-m64
+objs-m32
+objs-m64
 
 # Debug files
 *.dSYM/
