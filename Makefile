@@ -38,15 +38,23 @@ ipath =
 CFLAGS = -std=c11 -xO3 $(arch) $(ipath) -errtags=yes
 LDFLAGS = $(arch)
 
-EXE = solhexd
-SRC = 
+odir = objs$(arch)
 
-all: $(EXE)
+MAIN = solhexd
+EXE = $(MAIN)$(arch)
+SRC = $(MAIN).c
+objs = $(SRC:.c=.o)
+OBJS=$(objs:%=$(odir)/%)
 
-$(EXE): $(EXE).o
-		$(LD) -o $@ $(EXE).o $(LDFLAGS)
+all: $(odir) $(EXE)
 
-$(EXE).o: $(EXE).c
+$(odir):
+	mkdir -p $@
+
+$(EXE): $(OBJS)
+		$(LD) -o $(EXE) $(OBJS) $(LDFLAGS)
+
+$(odir)/%.o: %.c
 		$(CC) -c $< -o $@ $(CFLAGS)
 
 test: $(EXE)
@@ -54,5 +62,8 @@ test: $(EXE)
 		./$(EXE) --to 32 LICENSE README.md
 
 clean:
-		$(RM) $(EXE) $(EXE).o
+	@echo "objs -> $(objs)"
+	@echo "odir -> $(odir)"
+	@echo "OBJS -> $(OBJS)"
+		$(RM) $(EXE) $(OBJS)
 		$(RM) a.out core
