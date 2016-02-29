@@ -40,6 +40,7 @@
 #include <unistd.h>
 
 #include "include/basedef.h"
+#include "file-reader.h"
 
 #define HLEN	16
 #define BLEN	(HLEN * 256)
@@ -75,7 +76,7 @@ static TSfileConfig *duplicate(TSfileConfig *fileConfig) {
 	return fc;
 }
 
-static int hexdump(TSfileConfig *fc) {
+static int old_hexdump(TSfileConfig *fc) {
 	int fd = open(fc->fileName, O_RDONLY);
 	fprintf(stdout, "File : %s\n", fc->fileName);
 	fprintf(stdout, "  from : %08lx to : %08lx\n", fc->from, fc->to);
@@ -125,6 +126,65 @@ static int hexdump(TSfileConfig *fc) {
 				fprintf(stdout, "%s\n", line);
 			}
 		}
+	} else {
+		fprintf(stderr, "Cannot open file %s\n", fc->fileName);
+	}
+
+	free(fc);
+	return SUCCESS;
+}
+
+static int hexdump(TSfileConfig *fc) {
+	void *fd = fr_open(fc->fileName, NULL);
+	fprintf(stdout, "File : %s\n", fc->fileName);
+	fprintf(stdout, "  from : %08lx to : %08lx\n", fc->from, fc->to);
+	if (fd != NULL) {
+		ssize_t addr = 0;
+		ssize_t ptr_in = 0;
+		ssize_t read_len;
+		while ((read_len = fr_read(fd, buffer, BLEN)) > 0) {
+			int ptr_out = 0;
+			char *dst = line;
+			int rest = read_len;
+			uint8_t *src = buffer;
+
+			ptr_in += read_len;
+			while (ptr_out < ptr_in) {
+				int wbytes = sprintf(dst, "%08lx: ", addr);
+				uint8_t *old_src = src;
+				int imax = min(HLEN, rest);
+
+				dst += wbytes;
+				for (int i=0; i<imax; i++) {
+					wbytes = sprintf(dst, "%02x ", *(src++));
+					dst += wbytes;
+				}
+				if (imax < HLEN) {
+					for (int i=imax; i<HLEN; i++) {
+						wbytes = sprintf(dst, "   ", *(src++));
+						dst += wbytes;
+					}
+				}
+				src = old_src;
+				*(dst++) = '\'';
+				for (int i=0; i<imax; i++) {
+					uint8_t b = *(src++);
+					if (b < 32 || b > 127) {
+						*(dst++) = '.';
+					} else {
+						*(dst++) = (char)b;
+					}
+				}
+				*(dst++) = '\'';
+				*dst = 0;
+				dst = line;
+				ptr_out += HLEN;
+				addr += HLEN;
+				rest -= HLEN;
+				fprintf(stdout, "%s\n", line);
+			}
+		}
+		fr_close(fd);
 	} else {
 		fprintf(stderr, "Cannot open file %s\n", fc->fileName);
 	}

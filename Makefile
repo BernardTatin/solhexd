@@ -42,7 +42,7 @@ odir = objs$(arch)
 
 MAIN = solhexd
 EXE = $(MAIN)$(arch)
-SRC = $(MAIN).c
+SRC = $(MAIN).c file-reader.c
 objs = $(SRC:.c=.o)
 OBJS=$(objs:%=$(odir)/%)
 
@@ -54,7 +54,7 @@ $(odir):
 $(EXE): $(OBJS)
 		$(LD) -o $(EXE) $(OBJS) $(LDFLAGS)
 
-$(odir)/%.o: %.c
+$(odir)/%.o: %.c file-reader.h
 		$(CC) -c $< -o $@ $(CFLAGS)
 
 test: $(EXE)
