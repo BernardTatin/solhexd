@@ -33,4 +33,8 @@ solhexd
 
 # Debug files
 *.dSYM/
+
+# ide files
 /nbproject/
+.project
+.cproject
