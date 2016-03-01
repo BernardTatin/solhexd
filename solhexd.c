@@ -43,189 +43,103 @@
 #include "file-reader.h"
 
 #define HLEN	16
-#define BLEN	(HLEN * 256)
 #define LLEN	256
 
 typedef struct {
-	int64_t from;
-	int64_t to;
-	char *fileName;
+    char *fileName;
 } TSfileConfig;
 
-static uint8_t buffer[BLEN];
+static uint8_t buffer[HLEN];
 static char line[LLEN];
 
 static _Noreturn void dohelp(const int exitCode) {
-	fprintf(stdout, "dohelp\n");
-	exit(exitCode);
+    fprintf(stdout, "dohelp\n");
+    exit(exitCode);
 }
 
 static TSfileConfig *duplicate(TSfileConfig *fileConfig) {
-	TSfileConfig *fc = (TSfileConfig *)malloc(sizeof(TSfileConfig));
+    TSfileConfig *fc = (TSfileConfig *) malloc(sizeof (TSfileConfig));
 
-	if (fc == NULL) {
-		fprintf(stdout, "ERROR: cannot allocate memory\n");
-		exit(FAILURE);
-	}
-	fc->from = fileConfig->from;
-	fc->to = fileConfig->to;
-	fc->fileName = fileConfig->fileName;
+    if (fc == NULL) {
+        fprintf(stdout, "ERROR: cannot allocate memory\n");
+        exit(FAILURE);
+    }
+    fc->fileName = fileConfig->fileName;
 
-	fileConfig->fileName = NULL;
+    fileConfig->fileName = NULL;
 
-	return fc;
-}
-
-static int old_hexdump(TSfileConfig *fc) {
-	int fd = open(fc->fileName, O_RDONLY);
-	fprintf(stdout, "File : %s\n", fc->fileName);
-	fprintf(stdout, "  from : %08lx to : %08lx\n", fc->from, fc->to);
-	if (fd != -1) {
-		ssize_t addr = 0;
-		ssize_t ptr_in = 0;
-		ssize_t read_len;
-		while ((read_len = read(fd, buffer, BLEN)) > 0) {
-			int ptr_out = 0;
-			char *dst = line;
-			int rest = read_len;
-			uint8_t *src = buffer;
-
-			ptr_in += read_len;
-			while (ptr_out < ptr_in) {
-				int wbytes = sprintf(dst, "%08lx: ", addr);
-				uint8_t *old_src = src;
-				int imax = min(HLEN, rest);
-
-				dst += wbytes;
-				for (int i=0; i<imax; i++) {
-					wbytes = sprintf(dst, "%02x ", *(src++));
-					dst += wbytes;
-				}
-				if (imax < HLEN) {
-					for (int i=imax; i<HLEN; i++) {
-						wbytes = sprintf(dst, "   ", *(src++));
-						dst += wbytes;
-					}
-				}
-				src = old_src;
-				*(dst++) = '\'';
-				for (int i=0; i<imax; i++) {
-					uint8_t b = *(src++);
-					if (b < 32 || b > 127) {
-						*(dst++) = '.';
-					} else {
-						*(dst++) = (char)b;
-					}
-				}
-				*(dst++) = '\'';
-				*dst = 0;
-				dst = line;
-				ptr_out += HLEN;
-				addr += HLEN;
-				rest -= HLEN;
-				fprintf(stdout, "%s\n", line);
-			}
-		}
-	} else {
-		fprintf(stderr, "Cannot open file %s\n", fc->fileName);
-	}
-
-	free(fc);
-	return SUCCESS;
+    return fc;
 }
 
 static int hexdump(TSfileConfig *fc) {
-	void *fd = fr_open(fc->fileName, NULL);
-	fprintf(stdout, "File : %s\n", fc->fileName);
-	fprintf(stdout, "  from : %08lx to : %08lx\n", fc->from, fc->to);
-	if (fd != NULL) {
-		ssize_t addr = 0;
-		ssize_t ptr_in = 0;
-		ssize_t read_len;
-		while ((read_len = fr_read(fd, buffer, BLEN)) > 0) {
-			int ptr_out = 0;
-			char *dst = line;
-			int rest = read_len;
-			uint8_t *src = buffer;
+    void *fd = fr_open(fc->fileName, NULL);
+    fprintf(stdout, "File : %s\n", fc->fileName);
+    if (fd != NULL) {
+        ssize_t addr = 0;
+        ssize_t read_len;
 
-			ptr_in += read_len;
-			while (ptr_out < ptr_in) {
-				int wbytes = sprintf(dst, "%08lx: ", addr);
-				uint8_t *old_src = src;
-				int imax = min(HLEN, rest);
+        while ((read_len = fr_read(fd, buffer, HLEN)) > 0) {
+            char *dst = line;
+            int rest = read_len;
+            uint8_t *src = buffer;
 
-				dst += wbytes;
-				for (int i=0; i<imax; i++) {
-					wbytes = sprintf(dst, "%02x ", *(src++));
-					dst += wbytes;
-				}
-				if (imax < HLEN) {
-					for (int i=imax; i<HLEN; i++) {
-						wbytes = sprintf(dst, "   ", *(src++));
-						dst += wbytes;
-					}
-				}
-				src = old_src;
-				*(dst++) = '\'';
-				for (int i=0; i<imax; i++) {
-					uint8_t b = *(src++);
-					if (b < 32 || b > 127) {
-						*(dst++) = '.';
-					} else {
-						*(dst++) = (char)b;
-					}
-				}
-				*(dst++) = '\'';
-				*dst = 0;
-				dst = line;
-				ptr_out += HLEN;
-				addr += HLEN;
-				rest -= HLEN;
-				fprintf(stdout, "%s\n", line);
-			}
-		}
-		fr_close(fd);
-	} else {
-		fprintf(stderr, "Cannot open file %s\n", fc->fileName);
-	}
+            int wbytes = sprintf(dst, "%08lx: ", addr);
+            uint8_t *old_src = src;
+            int imax = min(HLEN, rest);
 
-	free(fc);
-	return SUCCESS;
+            dst += wbytes;
+            for (int i = 0; i < imax; i++) {
+                wbytes = sprintf(dst, "%02x ", *(src++));
+                dst += wbytes;
+            }
+            if (imax < HLEN) {
+                for (int i = imax; i < HLEN; i++) {
+                    wbytes = sprintf(dst, "   ", *(src++));
+                    dst += wbytes;
+                }
+            }
+            src = old_src;
+            *(dst++) = '\'';
+            for (int i = 0; i < imax; i++) {
+                uint8_t b = *(src++);
+                if (b < 32 || b > 127) {
+                    *(dst++) = '.';
+                } else {
+                    *(dst++) = (char) b;
+                }
+            }
+            *(dst++) = '\'';
+            *dst = 0;
+            dst = line;
+            addr += HLEN;
+            fprintf(stdout, "%s\n", line);
+        }
+        fr_close(fd);
+    } else {
+        fprintf(stderr, "Cannot open file %s\n", fc->fileName);
+    }
+
+    free(fc);
+    return SUCCESS;
 }
 
 int main(int argn, char *argv[]) {
-	int retCode = SUCCESS;
-	TSfileConfig fileConfig = {
-		0l,
-		0l,
-		NULL
-	};
+    int retCode = SUCCESS;
+    TSfileConfig fileConfig = {
+        NULL
+    };
 
-	for (int i=1; i<argn; i++) {
-		char *arg = argv[i];
+    for (int i = 1; i < argn; i++) {
+        char *arg = argv[i];
 
-		fprintf(stdout, "arg -> %s\n", arg);
+        fprintf(stdout, "arg -> %s\n", arg);
 
-		if (strcmp(arg, "--help") == 0) {
-			dohelp(SUCCESS);
-		} else if (strcmp(arg, "--from") == 0) {
-			i++;
-			if (i == argn) {
-				dohelp(FAILURE);
-			}
-			fileConfig.from = atol(argv[i]);
-			fprintf(stdout, "	from = %ld\n", fileConfig.from);
-		} else if (strcmp(arg, "--to") == 0) {
-			i++;
-			if (i == argn) {
-				dohelp(FAILURE);
-			}
-			fileConfig.to = (int64_t)atoi(argv[i]);
-			fprintf(stdout, "	to = %ld / %s\n", fileConfig.to, argv[i]);
-		} else {
-			fileConfig.fileName = arg;
-			hexdump(duplicate(&fileConfig));
-		}
-	}
-	return retCode;
+        if (strcmp(arg, "--help") == 0) {
+            dohelp(SUCCESS);
+        } else {
+            fileConfig.fileName = arg;
+            hexdump(duplicate(&fileConfig));
+        }
+    }
+    return retCode;
 }

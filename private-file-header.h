@@ -13,7 +13,6 @@
 typedef struct _FileReader {
 	char *filename;
 	uint8_t *buffer;
-	int ptr_in;
 	int ptr_out;
 	int count;
 	int file_handle;
@@ -30,6 +29,6 @@ static inline bool fr_iseof(TSFileReader *fr) {
 
 static inline bool fr_isempty(TSFileReader *fr) {
 	int count = fr->count;
-	return count == 0 || fr->ptr_out >= count;
+	return (count == 0) || (fr->ptr_out+1 >= count);
 }
 #endif /* PRIVATE_FILE_HEADER_H_ */

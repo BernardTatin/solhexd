@@ -33,9 +33,11 @@ LD = cc
 RM = rm -f
 
 arch = -m64
+# optim = -xO3 
+optim = -g
 
 ipath = 
-CFLAGS = -std=c11 -xO3 $(arch) $(ipath) -errtags=yes
+CFLAGS = -std=c11 $(arch) $(optim) $(ipath) -errtags=yes
 LDFLAGS = $(arch)
 
 odir = objs$(arch)

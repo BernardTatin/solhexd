@@ -64,7 +64,7 @@ int fr_read(void *fr_block, uint8_t *buffer, const int len) {
 		fr_fill_buffer(fr);
 	}
 
-	int real_len = min(len, fr->count - fr->ptr_out -1);
+	int real_len = min(len, fr->count - fr->ptr_out);
 	if (real_len < 0) {
 		real_len = 0;
 	} else {
