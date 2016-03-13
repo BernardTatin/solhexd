@@ -102,7 +102,7 @@ static int hexdump(TSfileConfig *fc) {
             *(dst++) = '\'';
             for (int i = 0; i < imax; i++) {
                 uint8_t b = *(src++);
-                if (b < 32 || b > 127) {
+                if (b < 32 || b >= 127) {
                     *(dst++) = '.';
                 } else {
                     *(dst++) = (char) b;

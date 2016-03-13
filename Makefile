@@ -33,8 +33,8 @@ LD = cc
 RM = rm -f
 
 arch = -m64
-# optim = -xO3 
-optim = -g
+optim = -xO3 
+# optim = -g
 
 ipath = 
 CFLAGS = -std=c11 $(arch) $(optim) $(ipath) -errtags=yes
